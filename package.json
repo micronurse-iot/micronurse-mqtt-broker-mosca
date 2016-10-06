@@ -1,0 +1,23 @@
+{
+  "name": "micronurse-mqtt-broker-mosca",
+  "version": "1.0.0",
+  "description": "The MQTT broker of Micro Nurse IoT application based on Mosca.",
+  "main": "mqtt-broker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "MQTT broker"
+  ],
+  "dependencies": {
+    "mosca": "^2.2.0",
+    "redis": "^2.6.2",
+    "mysql": "^2.11.1",
+    "log4js": "^0.6.38"
+  },
+  "author": {
+    "name": "Zhou Shengyun",
+    "email": "GGGZ-1101-28@Live.cn"
+  },
+  "license": "GPL-3.0"
+}
