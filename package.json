@@ -10,10 +10,11 @@
     "MQTT broker"
   ],
   "dependencies": {
-    "mosca": "^2.2.0",
-    "redis": "^2.6.2",
-    "mysql": "^2.11.1",
-    "log4js": "^0.6.38"
+    "mosca": "latest",
+    "redis": "latest",
+    "mysql": "latest",
+    "log4js": "latest",
+    "request": "latest"
   },
   "author": {
     "name": "Zhou Shengyun",

@@ -11,7 +11,7 @@ log4js.configure({
     }, {
       type: 'file',
       filename: 'mosca-broker.log',
-      maxLogSize: 2048 * 1024,
+      maxLogSize: 5 * 1024 * 1024,
       category: 'Mosca Broker'
     }
   ]

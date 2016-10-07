@@ -4,6 +4,7 @@
 var mosca = require('mosca');
 var logger = require('./log').logger;
 logger.setLevel('INFO');
+var authentication = require('./authentication');
 
 var redis_store_opts = {
   host: "micronurse-webserver",
@@ -31,9 +32,16 @@ server.on('clientConnected', function(client) {
   logger.info('Client connected: <' + client.id + '>');
 });
 
+server.on('published', function (packet, client) {
+  if(client) {
+    logger.info('Publish from client: <' + client.id + '>');
+    logger.info('Published message:' + packet.payload.toString());
+  }
+});
+
 server.on('delivered', function (packet, client) {
-  logger.info('Publish from client <' + client.id + '>');
-  logger.info('Published message:' + packet.payload.toString());
+  logger.info('Send to client <' + client.id + '>');
+  logger.info('Sent message:' + packet.payload.toString());
 });
 
 server.on('subscribed', function (topic, client) {
@@ -46,6 +54,7 @@ server.on('clientDisconnected', function(client) {
 
 function setup() {
   logger.info('Mosca server is up and running...');
+  server.authenticate = authentication.authenticate;
 }
 
 process.on('SIGINT', function(){
