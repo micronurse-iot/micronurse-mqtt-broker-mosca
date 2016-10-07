@@ -5,6 +5,7 @@ var mosca = require('mosca');
 var logger = require('./log').logger;
 logger.setLevel('INFO');
 var authentication = require('./authentication');
+var db_util = require('./database_utils');
 
 var redis_store_opts = {
   host: "micronurse-webserver",
@@ -55,10 +56,13 @@ server.on('clientDisconnected', function(client) {
 function setup() {
   logger.info('Mosca server is up and running...');
   server.authenticate = authentication.authenticate;
+  server.authorizePublish = authentication.authorize_publish;
+  server.authorizeSubscribe = authentication.authorize_subscribe;
 }
 
 process.on('SIGINT', function(){
   logger.info('Mosca server is stoping...');
+  db_util.close_db();
   server.close();
   process.exit(0);
 });

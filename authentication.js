@@ -9,6 +9,7 @@ var USER_TYPE_MOBILE = 'micronurse_mobile_user';
 var logger = require('./log').logger;
 logger.setLevel('INFO');
 var request = require('./micronurse_api_request');
+var db_util = require('./database_utils');
 
 var authenticate_connection = function(client, username, password, callback) {
   var authorized = false;
@@ -55,6 +56,91 @@ function on_authenticate_connection_finished(authorized, username, user_id, user
   callback(null, authorized);
 }
 
+function check_permission(client, topic, wr_perm, callback) {
+  var async_flag = false;
+  var perm_type = 'others_perm';
+  var topic_user = undefined;
+  var topic_split = topic.split('/');
+  if(topic_split.length > 1) {
+    topic_user = topic_split[topic_split.length - 1];
+    topic = '';
+    for(i = 0; i < topic_split.length - 1; i++){
+      topic += topic_split[i];
+      if(i < topic_split.length - 2)
+        topic += '/';
+    }
+  }
+  switch(client.user_type){
+    case USER_TYPE_WEBSERVER:
+      perm_type = 'server_perm';
+      break;
+    case USER_TYPE_IOT:
+      if(client.user == topic_user)
+        perm_type = 'iot_owner_perm';
+      break;
+    case USER_TYPE_MOBILE:
+      if(client.user == topic_user)
+        perm_type = 'mobile_owner_perm';
+      else{
+        async_flag = true;
+        db_util.query_guardianship(topic_user, client.user, function (err, rows, fields) {
+          if(err || rows.length <= 0){
+            if(err)
+              logger.error(err);
+          }else{
+            perm_type = 'mobile_guardian_perm';
+          }
+          check_permission_type(topic, perm_type, wr_perm, client, callback);
+        });
+      }
+      break;
+  }
+  if(!async_flag)
+    check_permission_type(topic, perm_type, wr_perm, client, callback);
+}
+
+function check_permission_type(topic, perm_type, wr_perm, client, callback) {
+  db_util.query_topic_permission(topic, function (err, rows, fields) {
+    if(err || rows.length <= 0){
+      if(err)
+        logger.error(err);
+      on_authorize_finished(false, client, topic, wr_perm, callback);
+    }else{
+      var authorized = false;
+      if(rows[0][perm_type] && rows[0][perm_type].toLowerCase().indexOf(wr_perm) >= 0)
+        authorized = true;
+      on_authorize_finished(authorized, client, topic, wr_perm, callback);
+    }
+  })
+}
+
+function on_authorize_finished(authorized, client, topic, wr_perm, callback) {
+  switch (wr_perm){
+    case 'w':
+      if(authorized)
+        logger.info('User <' + client.user_type + ':' + client.user + '> can publish on topic <' + topic + '>');
+      else
+        logger.error('User <' + client.user_type + ':' + client.user + '> have no permission to publish on topic <' + topic + '>');
+      break;
+    case 'r':
+      if(authorized)
+        logger.info('User <' + client.user_type + ':' + client.user + '> can receive messages on topic <' + topic + '>');
+      else
+        logger.error('User <' + client.user_type + ':' + client.user + '> have no permission to receive messages on topic <' + topic + '>');
+  }
+  callback(null, authorized);
+}
+
+var authorize_publish = function(client, topic, payload, callback) {
+  check_permission(client, topic, 'w', callback);
+};
+
+var authorize_subscribe = function(client, topic, callback) {
+  check_permission(client, topic, 'r', callback);
+};
+
 module.exports={
-  authenticate: authenticate_connection
+  authenticate: authenticate_connection,
+  authorize_publish: authorize_publish,
+  authorize_subscribe: authorize_subscribe
 };
