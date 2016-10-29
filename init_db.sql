@@ -12,7 +12,7 @@ CREATE TABLE topic_permission(
 );
 
 INSERT INTO topic_permission(topic, iot_owner_perm, mobile_owner_perm, mobile_guardian_perm, server_perm)
-    VALUES ('sensor_data_report', 'w', 'r', 'r', 'r');
+    VALUES ('sensor_data_report', 'wr', 'wr', 'r', 'r');
 INSERT INTO topic_permission(topic, mobile_owner_perm, mobile_guardian_perm, server_perm)
     VALUES ('sensor_warning', 'r', 'r', 'w');
 INSERT INTO topic_permission(topic, mobile_owner_perm, mobile_receiver_perm)
