@@ -14,6 +14,10 @@ var db_util = require('./database_utils');
 var authenticate_connection = function(client, username, password, callback) {
   var authorized = false;
   var url = undefined;
+  if(client.id != username) {
+    callback(null, false);
+    return;
+  }
   try{
     var user_type = username.split(':')[0];
     var user_id = username.split(':')[1];
