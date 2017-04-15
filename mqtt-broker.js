@@ -2,29 +2,15 @@
  * Created by zhou-shengyun on 16-10-5.
  */
 var mosca = require('mosca');
+var config = require('./config').config;
 var logger = require('./log').logger;
 logger.setLevel('INFO');
 var authentication = require('./authentication');
 var db_util = require('./database_utils');
 
-var redis_store_opts = {
-  host: "micronurse-webserver",
-  port: 6379,
-  db: 6,
-  ttl: {
-    subscriptions: 5 * 24 * 60 * 60 * 1000,       //5 days
-    packets: 5 * 24 * 60 * 60 * 1000              //5 days
-  }
-};
+var server = new mosca.Server(config.mosca);
 
-var mosca_settings = {
-  port: 13883
-};
-
-var server = new mosca.Server(mosca_settings);
-
-var db = mosca.persistence.Redis(redis_store_opts, function () {
-});
+var db = mosca.persistence.Redis(config.redis_store, function () {});
 db.wire(server);
 
 server.on('ready', setup);

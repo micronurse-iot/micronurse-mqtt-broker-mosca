@@ -29,21 +29,25 @@ Press `Ctrl+C` to stop broker.
 
 ## Start Server at Backend
 
-You can execute `start_server.sh`  in root directory of project directly to start server at backend.
+You can execute `start_server.sh` to start server at backend directly.
+
+And you can execute `tmux attach -t MicroNurse-MQTT` to view the log in real time.
 
 ## Sync Code to Remote Host
 
-You can use `sync.sh` in root directory of project to sync your code to remote host. This script will sync your code via command  `rsync`.
+You can use `sync.sh` to sync your code to remote host. This script will sync your code via `rsync`.
 
-Basic usage of `sync.sh`:
+Write into `sync_config.sh` as below to configure it.
 
 ```shell
-sync.sh ${REMOTE_HOST}
+remote_user=root
+remote_path=/home/root/micronurse-mqtt-broker
+remote_host=127.0.0.1
 ```
 
-`$REMOTE_HOST` refer to address of remote host that you want to sync code to.
+Lines in `sync_config.sh` will override the configuration set in `sync.sh`.
 
-By default, remote user is `root`, and syncing path on remote host is `/root/micronurse-mqtt-broker`.
+After that, you could sync your code.
 
 ## MQTT Authentication
 
@@ -71,24 +75,16 @@ For IoT-SOL client and mobile client, the password is the corresponding **`token
 
 ## Topic
 
-The format of full name of a topic is: `<topic_name>/[receiver_id]/[topic_user_id]`
+The format of full name of a topic is: `<topic_name>/[topic_owner_id]`
 
 `topic_name`: the name of a topic.
 
-`receiver_id`: (optional) the user ID of the specific receiver of a topic, if any.
-
-`topic_user_id`: (optional) the user ID of the owner of a topic, if any.
+`topic_owner_id`: (optional) the user ID of the owner of a topic, if any.
 
 For example, the full name of a topic named `sensor_warning`, whose owner ID is `100`:
 
 ```
 sensor_warning/100
-```
-
-the full name of a topic named 	`chatting`, whose owner ID is `100` and receiver ID is `101`:
-
-```
-chatting/101/100
 ```
 
 ## Topic R/W(Subscribe/Publish) Permission
@@ -99,12 +95,12 @@ For each topic, the permission limit apply to the following 6 roles:
 
 `Mobile Owner`: the owner of this topic from mobile client.
 
-`Mobile Guardian`: the guardian of the owner of this topic from mobile client.
+`Mobile Guardianship`: the user from mobile client who has a guardianship with the owner of this topic.
 
-`Mobile Receiver`: the receiver of this topic from mobile client.
+`Mobile Friend`: the user from mobile client who is a friend of the owner of this topic.
 
-`Server` : the web server.
+`Web Server` : the web server.
 
 `Others`:  others.
 
-You can find permission info of all topics in `init_db.sql`. 
+You can set permission of all topics in `config.js`.

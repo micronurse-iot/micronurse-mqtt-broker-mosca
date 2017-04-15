@@ -4,10 +4,11 @@
 
 exports.start_request = function (url, method, token, json_data, callback) {
   var req = require('request');
+  var config = require('./config').config;
 
   var opt = {
     method: method,
-    url: 'http://micronurse-webserver:13000/micronurse/v1' + url,
+    url: config.http_api_base_url_v1 + url,
     json: true,
     timeout: 10000
   };

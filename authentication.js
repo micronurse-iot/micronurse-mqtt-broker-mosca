@@ -10,6 +10,7 @@ var logger = require('./log').logger;
 logger.setLevel('INFO');
 var request = require('./micronurse_api_request');
 var db_util = require('./database_utils');
+var topic_perm = require('./config').mqtt_topic_perm;
 
 var authenticate_connection = function(client, username, password, callback) {
   var authorized = false;
@@ -28,10 +29,10 @@ var authenticate_connection = function(client, username, password, callback) {
           authorized = true;
         break;
       case USER_TYPE_IOT:
-        url = '/iot/check_login/' + user_id;
+        url = 'iot/check_login/' + user_id;
         break;
       case USER_TYPE_MOBILE:
-        url = '/mobile/account/check_login/' + user_id;
+        url = 'mobile/account/check_login/' + user_id;
         break;
     }
   }catch (err){
@@ -62,52 +63,53 @@ function on_authenticate_connection_finished(authorized, username, user_id, user
 
 function check_permission(client, topic, wr_perm, callback) {
   var async_flag = false;
-  var perm_type = 'others_perm';
+  var perm_type = 'others';
   var topic_user = undefined;
-  var topic_receiver = undefined;
   var topic_split = topic.split('/');
+  topic = topic_split[0];
   if(topic_split.length > 1) {
-    topic_user = topic_split[topic_split.length - 1];
-    var end = topic_split.length - 1;
+    topic_user = topic_split[1];
     if(topic_split.length > 2){
-      topic_receiver = topic_split[topic_split.length - 2];
-      end = topic_split.length - 2;
-    }
-    topic = '';
-    for(i = 0; i < end; i++){
-      topic += topic_split[i];
-      if(i < end - 1)
-        topic += '/';
+      on_authorize_finished(false, client, topic, wr_perm, callback);
+      return;
     }
   }
+  if(!topic_perm[topic]){
+    on_authorize_finished(false, client, topic, wr_perm, callback);
+    return;
+  }
+
   switch(client.user_type){
     case USER_TYPE_WEBSERVER:
-      perm_type = 'server_perm';
+      perm_type = 'web_server';
       break;
     case USER_TYPE_IOT:
-      if(client.user == topic_user)
-        perm_type = 'iot_owner_perm';
+      if(client.user && client.user == topic_user)
+        perm_type = 'iot_owner';
       break;
     case USER_TYPE_MOBILE:
-      if(client.user == topic_user)
-        perm_type = 'mobile_owner_perm';
+      if(client.user && client.user == topic_user)
+        perm_type = 'mobile_owner';
       else{
-        if(topic_receiver){
-          if(client.user == topic_receiver){
-            perm_type = 'mobile_receiver_perm';
-          }
-        }else {
-          async_flag = true;
-          db_util.query_guardianship(topic_user, client.user, function (err, rows, fields) {
-            if (err || rows.length <= 0) {
-              if (err)
-                logger.error(err);
-            } else {
-              perm_type = 'mobile_guardian_perm';
-            }
+        async_flag = true;
+        db_util.query_guardianship(topic_user, client.user, function (err, rows, fields) {
+          if (err || rows.length <= 0) {
+            if (err)
+              logger.error(err);
+            db_util.query_friendship(topic_user, client.user, function (err, rows, fields) {
+              if (err || rows.length <= 0) {
+                if (err)
+                  logger.error(err);
+              }else{
+                perm_type = 'mobile_friend';
+              }
+              check_permission_type(topic, perm_type, wr_perm, client, callback);
+            });
+          } else {
+            perm_type = 'mobile_guardianship';
             check_permission_type(topic, perm_type, wr_perm, client, callback);
-          });
-        }
+          }
+        });
       }
       break;
   }
@@ -116,18 +118,10 @@ function check_permission(client, topic, wr_perm, callback) {
 }
 
 function check_permission_type(topic, perm_type, wr_perm, client, callback) {
-  db_util.query_topic_permission(topic, function (err, rows, fields) {
-    if(err || rows.length <= 0){
-      if(err)
-        logger.error(err);
-      on_authorize_finished(false, client, topic, wr_perm, callback);
-    }else{
-      var authorized = false;
-      if(rows[0][perm_type] && rows[0][perm_type].toLowerCase().indexOf(wr_perm) >= 0)
-        authorized = true;
-      on_authorize_finished(authorized, client, topic, wr_perm, callback);
-    }
-  })
+  if(topic_perm[topic][perm_type] && topic_perm[topic][perm_type].toLowerCase().indexOf(wr_perm) >= 0)
+    on_authorize_finished(true, client, topic, wr_perm, callback);
+  else
+    on_authorize_finished(false, client, topic, wr_perm, callback);
 }
 
 function on_authorize_finished(authorized, client, topic, wr_perm, callback) {
