@@ -25,10 +25,15 @@ var config = {
     database        : 'MicroNurse'
   },
 
-  http_api_base_url_v1: 'http://localhost:13000/micronurse/v1/',
+  http_api_base_url_v1: 'http://localhost:13000/micronurse/v1/',    //DO NOT omit the last '/' separator 
 };
 
 var mqtt_topic_permission_matrix = {
+  iot_account: {
+    iot_anonymous_owner: 'r',
+    iot_owner: 'r',
+    web_server: 'w'
+  },
   chatting_guardianship: {
     mobile_owner: 'r',
     mobile_guardianship: 'w',

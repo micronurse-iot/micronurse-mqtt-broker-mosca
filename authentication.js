@@ -4,6 +4,7 @@
 
 var USER_TYPE_WEBSERVER = 'micronurse_webserver_user';
 var USER_TYPE_IOT = 'micronurse_iot_user';
+var USER_TYPE_IOT_ANONYMOUS = 'micronurse_iot_anonymous_user';
 var USER_TYPE_MOBILE = 'micronurse_mobile_user';
 
 var logger = require('./log').logger;
@@ -15,13 +16,17 @@ var topic_perm = require('./config').mqtt_topic_perm;
 var authenticate_connection = function(client, username, password, callback) {
   var authorized = false;
   var url = undefined;
-  if(client.id != username) {
-    callback(null, false);
+  if(client.id !== username) {
+    on_authenticate_connection_finished(false, username, null, null, client, callback);
     return;
   }
   try{
     var user_type = username.split(':')[0];
-    var user_id = username.split(':')[1];
+    var user_id = username.substring(user_type.length + 1);
+    if(!user_id) {
+      on_authenticate_connection_finished(false, username, null, null, client, callback);
+      return;
+    }
     switch (user_type){
       case USER_TYPE_WEBSERVER:
         //Hard code to simply checking
@@ -30,6 +35,9 @@ var authenticate_connection = function(client, username, password, callback) {
         break;
       case USER_TYPE_IOT:
         url = 'iot/check_login/' + user_id;
+        break;
+      case USER_TYPE_IOT_ANONYMOUS:
+        url = 'iot/check_anonymous/' + user_id;
         break;
       case USER_TYPE_MOBILE:
         url = 'mobile/account/check_login/' + user_id;
@@ -41,7 +49,7 @@ var authenticate_connection = function(client, username, password, callback) {
   if(url){
     request.start_request(url, 'GET', password.toString(), undefined, function (error, res, data) {
       if(!error){
-        if(res.statusCode == 200 && data.result_code == 0)
+        if(res.statusCode === 200 && data.result_code === 0)
           authorized = true;
       }
       on_authenticate_connection_finished(authorized, username, user_id, user_type, client, callback);
@@ -83,12 +91,16 @@ function check_permission(client, topic, wr_perm, callback) {
     case USER_TYPE_WEBSERVER:
       perm_type = 'web_server';
       break;
+    case USER_TYPE_IOT_ANONYMOUS:
+      if(client.user && client.user === topic_user)
+        perm_type = 'iot_anonymous_owner';
+      break;
     case USER_TYPE_IOT:
-      if(client.user && client.user == topic_user)
+      if(client.user && client.user === topic_user)
         perm_type = 'iot_owner';
       break;
     case USER_TYPE_MOBILE:
-      if(client.user && client.user == topic_user)
+      if(client.user && client.user === topic_user)
         perm_type = 'mobile_owner';
       else{
         async_flag = true;

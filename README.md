@@ -8,13 +8,7 @@ The MQTT broker of Micro Nurse IoT application based on [Mosca](https://github.c
 + MySQL
 
 ## Build and Run
-First, Add host name `micronurse-webserver`, which refer to the host running [Micro Nurse Web Server](https://github.com/micronurse-iot/micronurse-webserver-django), to `hosts` of your system. For example:
-
-```
-127.0.0.1	micronurse-webserver
-```
-
-Switch to the root directory of this project, execute following command to install all required Node.js modules:
+Execute following command to install all required Node.js modules:
 
 ```bash
 npm install
@@ -26,6 +20,10 @@ node mqtt-broker.js
 ```
 
 Press `Ctrl+C` to stop broker. 
+
+## Configuration
+
+All configurations are in `config.js`, including Redis and MySQL connection configurations, Mosca configurations, MQTT topic R/W permission configurations and so on.
 
 ## Start Server at Backend
 
@@ -49,21 +47,20 @@ Lines in `sync_config.sh` will override the configuration set in `sync.sh`.
 
 After that, you could sync your code.
 
-## MQTT Authentication
+## MQTT Connection Authentication
 
-If a client want to connect to broker, it must provide client ID, and correct user name and password.
+A client must provide a valid client ID, correct user name and password to connect to broker.
 
 NOTE: the client ID must be the same as user name.
 
 The format of client ID/user name is: `<client_type>:<user_id>`
 
-`client_type` must be one of the following 3 values:
+`client_type` must be one of the following values:
 
-+ micronurse_webserver_user (For web server)
-
-+ micronurse_iot_user (For IoT-SOL client)
-
-+ micronurse_mobile_user (For mobile client)
++ `micronurse_webserver_user`: user from web server.
++ `micronurse_iot_user`: user from IoT-SOL client.
++ `micronurse_iot_anonymous_user`: Anonymous user from IoT-SOL client. Before connecting, the anonymous user must apply for a temporary user ID from web server.
++ `micronurse_mobile_user`: user from mobile client.
 
 For example, the client ID/user name of  a client with user ID `100` from IoT-SOL:
 
@@ -71,7 +68,7 @@ For example, the client ID/user name of  a client with user ID `100` from IoT-SO
 micronurse_iot_user:100
 ```
 
-For IoT-SOL client and mobile client, the password is the corresponding **`token`** of the user.
+For user from IoT-SOL client and mobile client, the password is the corresponding **`token`**.
 
 ## Topic
 
@@ -89,9 +86,11 @@ sensor_warning/100
 
 ## Topic R/W(Subscribe/Publish) Permission
 
-For each topic, the permission limit apply to the following 6 roles:
+For each topic, the permission limit apply to the following roles:
 
 `IoT Owner`: the owner of this topic from IoT-SOL client.
+
+`IoT Anonymous Owner `: the owner(anonymous user) of this topic from IoT-SOL client.
 
 `Mobile Owner`: the owner of this topic from mobile client.
 
