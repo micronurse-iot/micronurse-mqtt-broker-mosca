@@ -86,7 +86,7 @@ sensor_warning/100
 
 ## Topic R/W(Subscribe/Publish) Permission
 
-For each topic, the permission limit apply to the following roles:
+For each `topic_name`, the r/w permission limit applies to the following roles:
 
 `IoT Owner`: the owner of this topic from IoT-SOL client.
 
@@ -102,4 +102,26 @@ For each topic, the permission limit apply to the following roles:
 
 `Others`:  others.
 
-You can set permission of all topics in `config.js`.
+You can set permissions of all topics in `config.js`.
+
+#### Example
+
+If there is a topic with full name `chatting_friend/100`, and the r/w permission configuration of topic name `chatting_friend` is:
+
++ `Mobile Owner`: r
++ `Mobile Friend`: w
++ Other roles: none
+
+1. For client with type `micronurse_mobile_user` and user ID `100`, its corresponding role is `Mobile Owner`, so it can subscribe this topic.
+2. For client with type `micronurse_mobile_user` and user Id `102`, its corresponding role is `Mobile Friend` because user `102` is a friend of user `100`, so it can publish messages to this topic.
+
+More client instance:
+
+| Client Type                   | User ID  | Role                                     |
+| ----------------------------- | -------- | ---------------------------------------- |
+| micronurse_webserver_user     | admin    | Web Server                               |
+| micronurse_iot_user           | 100      | IoT Owner                                |
+| micronurse_mobile_user        | 101      | Mobile Guardianship(assumed that user `101`  has a guardianship with user `100`) |
+| micronurse_iot_anonymous_user | balabala | Others                                   |
+| micronurse_mobile_user        | 110      | Others(assumed that user `110` has no relationship with user `100`) |
+| micronurse_iot_user           | 102      | Others                                   |
