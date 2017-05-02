@@ -55,19 +55,19 @@ var mqtt_topic_permission_matrix = {
   },
   binding_request_message: {
     mobile_owner: 'r',
-    mobile_guardianship: 'w',
+    web_server: 'w',
   },
   add_friends_request_message: {
     mobile_owner: 'r',
-    mobile_friend: 'w',
+    web_server: 'w',
   },
   binding_response_message: {
     mobile_owner: 'r',
-    mobile_guardianship: 'w',
+    web_server: 'w',
   },
   add_friends_response_message: {
     mobile_owner: 'r',
-    mobile_friend: 'w',
+    web_server: 'w',
   }
 };
 
